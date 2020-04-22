@@ -6,7 +6,7 @@ const Thread = require("./models/Thread");
 const Category = require("./models/Category");
 
 const data = require("./data.js");
-const config = require("./config/default");
+const config = require("./config/");
 
 class DB {
   constructor() {
@@ -26,24 +26,24 @@ class DB {
   }
 
   async pushDataToDb() {
-    await this.categories.forEach(async category => {
+    await this.categories.forEach(async (category) => {
       const newCategory = new Category(category);
       await newCategory.save(() => {});
     });
 
-    await this.users.forEach(async user => {
+    await this.users.forEach(async (user) => {
       await new User(user).save(() => {});
     });
 
-    await this.meetups.forEach(async meetup => {
+    await this.meetups.forEach(async (meetup) => {
       await new Meetup(meetup).save(() => {});
     });
 
-    await this.threads.forEach(async thread => {
+    await this.threads.forEach(async (thread) => {
       await new Thread(thread).save(() => {});
     });
 
-    await this.posts.forEach(async post => {
+    await this.posts.forEach(async (post) => {
       await new Post(post).save(() => {});
     });
 
@@ -63,4 +63,4 @@ mongoose
     await db.seedDb();
     console.log("You can close connection now!");
   })
-  .catch(err => console.log(err));
+  .catch((err) => console.log(err));

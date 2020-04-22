@@ -8,13 +8,14 @@ const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
 const passport = require("passport");
 const morgan = require("morgan");
+const path = require("path");
 
-const dbConfig = require("./config/default");
+const dbConfig = require("./config/");
 
 // Store sessions in MongoDB
 const store = new MongoDBStore({
   uri: dbConfig.MONGO_URI,
-  collection: "meetupSession"
+  collection: "meetupSession",
 });
 
 // Catch errors
@@ -27,14 +28,14 @@ mongoose
   .connect(dbConfig.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    useCreateIndex: true
+    useCreateIndex: true,
   })
-  .then(x => {
+  .then((x) => {
     console.log(
       `Connected to MongoDB! Database name: "${x.connections[0].name}"`
     );
   })
-  .catch(error => {
+  .catch((error) => {
     console.error("Error while connecting to MongoDB", error);
   });
 
@@ -56,11 +57,11 @@ app.use(
   session({
     secret: dbConfig.SESSION_SECRET,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
     },
     store: store,
     resave: true,
-    saveUninitialized: true
+    saveUninitialized: true,
   })
 );
 app.use(passport.initialize());
@@ -75,6 +76,15 @@ app.use("/api/categories", require("./routes/categories"));
 app.use("/api/ip", require("./routes/api"));
 
 require("./services/passport");
+
+if (process.env.NODE_ENV === "production") {
+  const appPath = path.join(__dirname, "..", "dist");
+  app.use(express.static(appPath));
+
+  app.get("*", function(req, res) {
+    res.sendFile(path.resolve(appPath, "index.html"));
+  });
+}
 
 // Listening to port
 server.listen(port);
