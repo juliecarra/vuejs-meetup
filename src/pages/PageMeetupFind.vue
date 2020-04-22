@@ -1,0 +1,242 @@
+<template>
+  <div>
+    <div class="lookup-prebody">
+      <AppHeroFind :categoryName="category" />
+      <div class="meetup-lookup-wrap">
+        <div class="meetup-lookup centered">
+          <div class="level">
+            <div class="level-left">
+              <div class="level-item">
+                <input
+                  @keyup.enter="fetchMeetups"
+                  v-model="searchedLocation"
+                  type="text"
+                  class="input"
+                  placeholder="New York"
+                />
+              </div>
+              <div v-if="searchedLocation && meetups && meetups.length > 0" class="level-item">
+                <span>Meetups in {{meetups[0].location}}</span>
+              </div>
+              <div v-if="category" class="level-item">
+                <button @click="cancelCategory" class="button is-danger">
+                  {{category}}
+                  <i :style="{'margin-left': '10px'}" class="far fa-times-circle"></i>
+                </button>
+              </div>
+            </div>
+            <div class="level-right">
+              <div class="level-item">
+                <button class="button is-medium m-r-sm btn">Meetups</button>
+                <button class="button is-medium btn">Calendar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <section class="section page-find">
+        <div v-if="meetups && meetups.length > 0" class="columns cover is-multiline">
+          <div
+            v-for="meetup of meetups"
+            :key="meetup._id"
+            class="column is-one-third"
+            :style="{ 'min-height': '160px' }"
+          >
+            <router-link
+              :to="'/meetups/' + meetup._id"
+              class="meetup-card-find"
+              href="#"
+              :style="{
+                'background-image': `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${meetup.image})`
+              }"
+            >
+              <div class="meetup-card-find-content">
+                <div class="meetup-card-find-content-date is-pulled-right">
+                  <span class="month">
+                    {{
+                    meetup.startDate | formatDate2("MMM")
+                    }}
+                  </span>
+                  <span class="day">
+                    {{
+                    meetup.startDate | formatDate2("D")
+                    }}
+                  </span>
+                </div>
+                <div class="meetup-card-find-content-info">
+                  <p class="title is-4 no-padding is-marginless m-b-xs">{{ meetup.title }}</p>
+                  <span class="tag is-success m-b-xs">
+                    {{
+                    meetup.category.name | capitalize
+                    }}
+                  </span>
+                  <p class="subtitle is-7">{{ meetup.location }}</p>
+                </div>
+                <div class="meetup-card-find-interest">
+                  <p class="subtitle is-7">{{ meetup.joinedPeopleCount }}</p>
+                </div>
+              </div>
+            </router-link>
+          </div>
+        </div>
+        <div v-else>
+          <span class="tag is-warning is-large">
+            No meetups found
+            in {{searchedLocation}}
+            <span
+              :style="{'margin-left': '10px'}"
+              v-if="category"
+            >for {{category}} category</span>. You might try to change your search criteria.
+          </span>
+        </div>
+      </section>
+    </div>
+  </div>
+</template>
+
+<script>
+import AppHeroFind from "@/components/shared/AppHeroFind.vue";
+import { mapActions, mapState } from "vuex";
+import axios from "axios";
+
+export default {
+  components: {
+    AppHeroFind
+  },
+  props: {
+    category: {
+      required: false,
+      type: String
+    }
+  },
+  data() {
+    return {
+      searchedLocation: this.$store.getters["meta/location"],
+      filter: {}
+    };
+  },
+  computed: {
+    ...mapState({
+      meetups: state => state.meetups.items
+    })
+  },
+  methods: {
+    // ...mapActions("meetups", ["fetchMeetups"])
+    fetchMeetups() {
+      if (this.searchedLocation) {
+        this.filter["location"] = this.searchedLocation
+          .toLowerCase()
+          .replace(/[\s,]+/g, "")
+          .trim();
+      }
+      if (this.category) {
+        this.filter["category"] = this.category;
+      }
+
+      this.$store.dispatch("meetups/fetchMeetups", { filter: this.filter });
+    },
+    cancelCategory() {
+      this.$router.push({ name: "PageMeetupFind" });
+    }
+  },
+  created() {
+    this.fetchMeetups();
+
+    //or without ...mapActions
+    // this.$store.dispatch("fetchMeetups");
+  }
+};
+</script>
+
+<style lang="scss" scoped>
+.page-find {
+  margin-top: 50px;
+}
+.meetup-card-find {
+  width: 100%;
+  height: 180px;
+  position: relative;
+  display: block;
+  border-radius: 3px;
+  text-decoration: none;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.05);
+  background-clip: content-box;
+  background-size: cover;
+  background-position: 50% 20%;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  -webkit-tap-highlight-color: transparent;
+  &-interest {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    > p {
+      font-weight: bold;
+    }
+  }
+  .title {
+    color: white;
+  }
+  .subtitle {
+    color: white;
+  }
+  &-content {
+    &-date {
+      margin: 10px;
+      width: 70px;
+      text-align: center;
+      border-radius: 50%;
+      .day {
+        display: block;
+        font-size: 21px;
+        color: white;
+        font-weight: bold;
+      }
+      .month {
+        display: block;
+        color: #ff5050;
+        font-weight: bold;
+        font-size: 23px;
+        margin-bottom: -5px;
+      }
+    }
+    &-info {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      padding: 15px;
+      width: 100%;
+    }
+  }
+}
+.text-overlay-wrapper {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+}
+.lookup-prebody {
+  position: relative;
+}
+.meetup-lookup {
+  width: 960px;
+  margin: 0 auto;
+  background-color: #1a2238;
+  padding: 20px;
+  color: white;
+}
+.meetup-lookup-wrap {
+  width: 100%;
+  z-index: 2;
+  position: absolute;
+  top: auto;
+  bottom: -42px;
+}
+
+.tag {
+  font-family: Graphik Meetup, -apple-system, BlinkMacSystemFont, Roboto,
+    Helvetica, Arial, sans-serif;
+}
+</style>
