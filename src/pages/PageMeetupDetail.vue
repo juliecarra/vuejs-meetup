@@ -104,7 +104,7 @@
                 v-if="!isAuthenticated"
                 :disabled="true"
                 class="button is-warning"
-              >You need authenticate in order to join</button>
+              >You need to be authenticated in order to join this meetup</button>
               <ThreadCreateModal
                 v-if="isMember || isOwner"
                 :btnTitle="`Welcome ${currentUser.username}, Start a new thread`"
